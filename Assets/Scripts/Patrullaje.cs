@@ -41,7 +41,6 @@ public class Patrullaje : MonoBehaviour
             if(hit.collider.gameObject.CompareTag("Player"))
             {
                 patrullando = false;
-                Debug.Log("Jugador detectado!");
             }
         }
     }
