@@ -13,10 +13,9 @@ public class Patrullaje : MonoBehaviour
     [SerializeField] Transform[] puntosPatrullaje;
     [SerializeField] Animator anim;
     [SerializeField] float velocity;
-    [SerializeField] bool patrullando = true;
     [SerializeField] Transform jugador;
-    [SerializeField] GameObject UI;
     [SerializeField] float tiempo = 2f;
+    bool playerEnSight = false;
     float tiempoAct = 0f;
 
     void Awake()
@@ -26,18 +25,18 @@ public class Patrullaje : MonoBehaviour
 
     void Update()
     {
-        if (agent.remainingDistance < 0.5f && !agent.pathPending && patrullando)
+        if (agent.remainingDistance < 0.5f && !agent.pathPending && PatrullandoGlob.patrullando)
         {
             puntoActual = (puntoActual + 1) % puntosPatrullaje.Length;
             agent.SetDestination(puntosPatrullaje[puntoActual].position);
         }
 
-        if (!patrullando)
+        if (!PatrullandoGlob.patrullando)
         {
             agent.destination = jugador.position;
             if (agent.remainingDistance < 0.5f)
             {
-                SceneManager.LoadScene("EscenaDerrota");
+                //  SceneManager.LoadScene("EscenaDerrota");
             }
 
             velocity = agent.velocity.magnitude;
@@ -47,12 +46,22 @@ public class Patrullaje : MonoBehaviour
             {
                 if (hit.collider.gameObject.CompareTag("Player"))
                 {
-                    patrullando = false;
+                    playerEnSight = true;
                 }
-                if (!hit.collider.gameObject.CompareTag("Player"))
+
+                if (playerEnSight)
                 {
-                    patrullando = true;
+                    PatrullandoGlob.patrullando = false;
+                    tiempoAct = 0f;
+                    playerEnSight = false;
+                }
+                else
+                {
                     tiempoAct += Time.deltaTime;
+                    if (tiempoAct > tiempo)
+                    {
+                        PatrullandoGlob.patrullando = true;
+                    }
                 }
 
             }
