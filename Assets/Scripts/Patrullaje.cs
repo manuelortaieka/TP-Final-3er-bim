@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AI;
+using UnityEngine.SceneManagement;
 
 public class Patrullaje : MonoBehaviour
 {
@@ -9,11 +10,14 @@ public class Patrullaje : MonoBehaviour
     NavMeshAgent agent;
     [SerializeField] Transform sightOrigin;
     [SerializeField] float rayDistance;
-    [SerializeField] Transform[] puntosPatrullaje; 
+    [SerializeField] Transform[] puntosPatrullaje;
     [SerializeField] Animator anim;
     [SerializeField] float velocity;
     [SerializeField] bool patrullando = true;
     [SerializeField] Transform jugador;
+    [SerializeField] GameObject UI;
+    [SerializeField] float tiempo = 2f;
+    float tiempoAct = 0f;
 
     void Awake()
     {
@@ -31,25 +35,33 @@ public class Patrullaje : MonoBehaviour
         if (!patrullando)
         {
             agent.destination = jugador.position;
-        }
-        velocity = agent.velocity.magnitude;
-        anim.SetFloat("Speed", velocity);
-
-        // Raycast detección
-        if (Physics.Raycast(sightOrigin.position, sightOrigin.forward, out RaycastHit hit, rayDistance))
-        {
-            if(hit.collider.gameObject.CompareTag("Player"))
+            if (agent.remainingDistance < 0.5f)
             {
-                patrullando = false;
+                SceneManager.LoadScene("EscenaDerrota");
+            }
+
+            velocity = agent.velocity.magnitude;
+            anim.SetFloat("Speed", velocity);
+
+            if (Physics.Raycast(sightOrigin.position, sightOrigin.forward, out RaycastHit hit, rayDistance))
+            {
+                if (hit.collider.gameObject.CompareTag("Player"))
+                {
+                    patrullando = false;
+                }
+                if (!hit.collider.gameObject.CompareTag("Player"))
+                {
+                    patrullando = true;
+                    tiempoAct += Time.deltaTime;
+                }
+
             }
         }
-    }
 
-    void OnDrawGizmos()
-    {
-        if (sightOrigin == null) return;
-
-        Gizmos.color = Color.red;
-        Gizmos.DrawLine(sightOrigin.position, sightOrigin.position + sightOrigin.forward * rayDistance);
+        void OnDrawGizmos()
+        {
+            Gizmos.color = Color.red;
+            Gizmos.DrawLine(sightOrigin.position, sightOrigin.position + sightOrigin.forward * rayDistance);
+        }
     }
 }
