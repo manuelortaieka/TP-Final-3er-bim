@@ -15,20 +15,45 @@ public class Patrullaje : MonoBehaviour
     [SerializeField] float velocity;
     [SerializeField] Transform jugador;
     [SerializeField] float tiempo = 2f;
-    bool playerEnSight = false;
-    float tiempoAct = 0f;
+    bool playerVisto = false;
 
     void Awake()
     {
         agent = GetComponent<NavMeshAgent>();
     }
 
+
     void Update()
     {
-        if (agent.remainingDistance < 0.5f && !agent.pathPending && PatrullandoGlob.patrullando)
+        velocity = agent.velocity.magnitude;
+        anim.SetFloat("Speed", velocity);
+        if (agent.remainingDistance < 0.5 && PatrullandoGlob.patrullando)
         {
             puntoActual = (puntoActual + 1) % puntosPatrullaje.Length;
             agent.SetDestination(puntosPatrullaje[puntoActual].position);
+        }
+
+        if (Physics.Raycast(sightOrigin.position, sightOrigin.forward, out RaycastHit hit, rayDistance))
+        {
+            if (hit.collider.gameObject.CompareTag("Player"))
+            {
+                playerVisto = true;
+                tiempo = 2f;
+            }
+
+        }
+        if (playerVisto)
+        {
+            PatrullandoGlob.patrullando = false;
+            tiempo -= Time.deltaTime;
+            Debug.Log(tiempo);
+        }
+
+        if (tiempo <= 0f)
+        {
+            playerVisto = false;
+            tiempo = 2f;
+            PatrullandoGlob.patrullando = true;
         }
 
         if (!PatrullandoGlob.patrullando)
@@ -36,41 +61,8 @@ public class Patrullaje : MonoBehaviour
             agent.destination = jugador.position;
             if (agent.remainingDistance < 0.5f)
             {
-                //  SceneManager.LoadScene("EscenaDerrota");
+                SceneManager.LoadScene("EscenaDerrota");
             }
-
-            velocity = agent.velocity.magnitude;
-            anim.SetFloat("Speed", velocity);
-
-            if (Physics.Raycast(sightOrigin.position, sightOrigin.forward, out RaycastHit hit, rayDistance))
-            {
-                if (hit.collider.gameObject.CompareTag("Player"))
-                {
-                    playerEnSight = true;
-                }
-
-                if (playerEnSight)
-                {
-                    PatrullandoGlob.patrullando = false;
-                    tiempoAct = 0f;
-                    playerEnSight = false;
-                }
-                else
-                {
-                    tiempoAct += Time.deltaTime;
-                    if (tiempoAct > tiempo)
-                    {
-                        PatrullandoGlob.patrullando = true;
-                    }
-                }
-
-            }
-        }
-
-        void OnDrawGizmos()
-        {
-            Gizmos.color = Color.red;
-            Gizmos.DrawLine(sightOrigin.position, sightOrigin.position + sightOrigin.forward * rayDistance);
         }
     }
 }
